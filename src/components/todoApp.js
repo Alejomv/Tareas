@@ -1,35 +1,46 @@
 import { useState } from "react";
-import Todo from "./todo";
-
+import Todo from "./todo";  // Asumo que este componente ya existe y funciona como se espera
 import "./todoApp.css";
 
 export default function TodoApp() {
   const [title, setTitle] = useState("");
   const [todos, setTodos] = useState([]);
-  const [editItem, setEditItem] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredTodos, setFilteredTodos] = useState([]);
 
-  function handleInputChange(e) {
+  function handleTitleChange(e) {
     setTitle(e.target.value);
   }
 
   function handleSubmit(e) {
     e.preventDefault();
-    const newTodo = {
-      id: Date.now(),
-      title: title,
-      completed: false,
-    };
 
-    const oldTodos = [...todos];
-    oldTodos.unshift(newTodo);
+    if (title.trim() === "") {
+      alert("Debes ingresar el nombre de la tarea.");
+      return;
+    }
 
-    setTodos(oldTodos);
-    setTitle("");
+    const existingTodo = todos.find(
+      (item) => item.title.toLowerCase() === title.toLowerCase()
+    );
+
+    if (existingTodo) {
+      alert("Una tarea con este nombre ya existe.");
+      setTitle("");
+    } else {
+      const newTodo = {
+        id: Date.now(),
+        title: title,
+        completed: false,
+      };
+      
+      setTodos([newTodo, ...todos]);
+      setTitle("");
+    }
   }
 
   function handleDelete(id) {
     const tempTodos = todos.filter((item) => item.id !== id);
-
     setTodos([...tempTodos]);
   }
 
@@ -44,24 +55,48 @@ export default function TodoApp() {
     const temp = [...todos];
     const item = temp.find((item) => item.id === id);
     item.completed = status;
-
-    console.log("Holis");
     setTodos([...temp]);
+  }
+
+  function handleSearch(e) {
+    setSearchTerm(e.target.value);
+
+    const filtered = todos.filter((item) =>
+      item.title.toLowerCase().includes(e.target.value.toLowerCase())
+    );
+    setFilteredTodos(filtered);
   }
 
   return (
     <div className="todoContainer">
+      {/* Formulario para crear una nueva tarea */}
       <form onSubmit={handleSubmit} className="todoCreateForm">
-        <input
-          onChange={handleInputChange}
-          value={title}
-          className="todoInput"
-        />
-        <input value="Crear Actividad" type={"submit"} className="buttonCreate" />
+        <div className="form-group">
+          <input
+            onChange={handleTitleChange}
+            value={title}
+            className="todoInput"
+            placeholder="Crear tarea..."
+          />
+          <button type="submit" className="buttonCreate">
+            Crear
+          </button>
+        </div>
       </form>
 
+      {/* Caja de texto para la búsqueda */}
+      <div className="searchBox">
+        <input
+          type="text"
+          placeholder="Buscar..."
+          value={searchTerm}
+          onChange={handleSearch}
+          className="searchInput"
+        />
+      </div>
+
       <div className="todosContainer">
-        {todos.map((item) => (
+        {(searchTerm ? filteredTodos : todos).map((item) => (
           <Todo
             key={item.id}
             item={item}
